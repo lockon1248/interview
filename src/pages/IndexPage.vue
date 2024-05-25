@@ -4,7 +4,7 @@
       <div class="q-mb-xl">
         <q-input v-model="tempData.name" label="姓名" />
         <q-input v-model="tempData.age" label="年齡" />
-        <q-btn color="primary" class="q-mt-md">新增</q-btn>
+        <q-btn color="primary" class="q-mt-md" @click="addData">新增</q-btn>
       </div>
 
       <q-table
@@ -26,7 +26,6 @@
             <q-th></q-th>
           </q-tr>
         </template>
-
         <template v-slot:body="props">
           <q-tr :props="props">
             <q-td
@@ -36,6 +35,16 @@
               style="min-width: 120px"
             >
               <div>{{ col.value }}</div>
+              <template v-if="col.name === 'name'">
+                <q-popup-edit v-model="props.row.name">
+                  <q-input v-model="props.row.name" dense autofocus counter />
+                </q-popup-edit>
+              </template>
+              <template v-if="col.name === 'age'">
+                <q-popup-edit v-model="props.row.age">
+                  <q-input v-model="props.row.age" dense autofocus counter />
+                </q-popup-edit>
+              </template>
             </q-td>
             <q-td class="text-right" auto-width v-if="tableButtons.length > 0">
               <q-btn
@@ -78,20 +87,21 @@
 </template>
 
 <script setup lang="ts">
-import axios from 'axios';
 import { QTableProps } from 'quasar';
+import {
+  apiGetList,
+  apiAddData,
+  apiEditData,
+  apiDeleteData,
+} from '../api/interView';
 import { ref } from 'vue';
 interface btnType {
   label: string;
   icon: string;
   status: string;
 }
-const blockData = ref([
-  {
-    name: 'test',
-    age: 25,
-  },
-]);
+const isEdit = ref(false);
+const blockData = ref([]);
 const tableConfig = ref([
   {
     label: '姓名',
@@ -123,9 +133,38 @@ const tempData = ref({
   name: '',
   age: '',
 });
-function handleClickOption(btn, data) {
-  // ...
-}
+const handleClickOption = async (btn: btnType, data: any) => {
+  console.log(data);
+  if (btn.status === 'edit') {
+    await apiEditData(data);
+  } else {
+    const res = await apiDeleteData(data.id);
+    if (res) {
+      getData();
+    }
+  }
+};
+
+const addData = async () => {
+  const data = {
+    name: tempData.value.name,
+    age: tempData.value.age,
+  };
+  const res = await apiAddData(data);
+  if (res) {
+    getData();
+    tempData.value.name = '';
+    tempData.value.age = '';
+  } else {
+    alert('error');
+  }
+};
+const getData = async () => {
+  const res = await apiGetList();
+  console.log(res);
+  blockData.value = res.data;
+};
+getData();
 </script>
 
 <style lang="scss" scoped>
