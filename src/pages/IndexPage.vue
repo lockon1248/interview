@@ -100,7 +100,6 @@ interface btnType {
   icon: string;
   status: string;
 }
-const isEdit = ref(false);
 const blockData = ref([]);
 const tableConfig = ref([
   {
@@ -138,25 +137,38 @@ const handleClickOption = async (btn: btnType, data: any) => {
   if (btn.status === 'edit') {
     await apiEditData(data);
   } else {
-    const res = await apiDeleteData(data.id);
-    if (res) {
-      getData();
+    if (window.confirm('確定要刪除這個項目嗎？')) {
+      const res = await apiDeleteData(data.id);
+      if (res) {
+        getData();
+      }
+    } else {
+      return;
     }
   }
 };
 
 const addData = async () => {
-  const data = {
-    name: tempData.value.name,
-    age: tempData.value.age,
-  };
-  const res = await apiAddData(data);
-  if (res) {
-    getData();
-    tempData.value.name = '';
-    tempData.value.age = '';
+  if (
+    tempData.value.name === '' ||
+    tempData.value.age === '' ||
+    !/^\d+$/.test(tempData.value.age)
+  ) {
+    alert('資料未填寫完全或年齡不是正整數');
+    return;
   } else {
-    alert('error');
+    const data = {
+      name: tempData.value.name,
+      age: tempData.value.age,
+    };
+    const res = await apiAddData(data);
+    if (res) {
+      getData();
+      tempData.value.name = '';
+      tempData.value.age = '';
+    } else {
+      alert('error');
+    }
   }
 };
 const getData = async () => {
